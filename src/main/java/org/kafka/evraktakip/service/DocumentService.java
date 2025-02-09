@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.transaction.Transactional;
+import java.awt.Desktop;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -99,5 +101,49 @@ public class DocumentService {
         }
         
         documentRepository.deleteById(id);
+    }
+
+    public void openDocument(Long id) {
+        Document document = documentRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Evrak bulunamadı: " + id));
+
+        try {
+            File file = new File(document.getFilePath());
+            if (!file.exists()) {
+                throw new RuntimeException("Dosya bulunamadı: " + document.getFilePath());
+            }
+
+            String os = System.getProperty("os.name").toLowerCase();
+
+            if (os.contains("win")) {
+                // Windows
+                Runtime.getRuntime().exec(new String[] { "cmd", "/c", "start", file.getAbsolutePath() });
+            } else if (os.contains("mac")) {
+                // macOS
+                Runtime.getRuntime().exec(new String[] { "open", file.getAbsolutePath() });
+            } else if (os.contains("nix") || os.contains("nux")) {
+                // Linux/Unix
+                Runtime.getRuntime().exec(new String[] { "xdg-open", file.getAbsolutePath() });
+            } else {
+                // Diğer işletim sistemleri için Desktop API'yi deneyelim
+                if (Desktop.isDesktopSupported()) {
+                    Desktop desktop = Desktop.getDesktop();
+                    if (desktop.isSupported(Desktop.Action.OPEN)) {
+                        desktop.open(file);
+                    } else {
+                        throw new RuntimeException("Dosya açma işlemi desteklenmiyor");
+                    }
+                } else {
+                    throw new RuntimeException("Sistem dosya açma işlemini desteklemiyor");
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Dosya açılırken hata oluştu: " + e.getMessage(), e);
+        }
+    }
+
+    public Document getDocument(Long id) {
+        return documentRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Evrak bulunamadı: " + id));
     }
 }

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.kafka.evraktakip.dto.DocumentDTO;
+import org.kafka.evraktakip.model.Document;
 import org.kafka.evraktakip.service.DocumentService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +13,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @RestController
 @RequestMapping("/api/documents")
@@ -48,5 +55,28 @@ public class DocumentController {
     public ResponseEntity<Void> deleteDocument(@PathVariable Long id) {
         documentService.deleteDocument(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Evrak aç")
+    @PostMapping("/{id}/open")
+    public ResponseEntity<Void> openDocument(@PathVariable Long id) {
+        documentService.openDocument(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Evrak indir")
+    @GetMapping("/{id}/download")
+    public ResponseEntity<Resource> downloadDocument(@PathVariable Long id) {
+        Document document = documentService.getDocument(id);
+        try {
+            Path filePath = Paths.get(document.getFilePath());
+            Resource resource = new UrlResource(filePath.toUri());
+            
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + document.getOriginalFileName() + "\"")
+                    .body(resource);
+        } catch (IOException e) {
+            throw new RuntimeException("Dosya indirilemedi", e);
+        }
     }
 }
