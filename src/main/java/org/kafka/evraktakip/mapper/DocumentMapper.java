@@ -8,8 +8,9 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface DocumentMapper {
     @Mapping(source = "company.id", target = "companyId")
+    @Mapping(source = "company.name", target = "companyName")
     DocumentDTO toDto(Document document);
 
-    // Not: Document oluşturulurken company bilgisini ayrı atayacağımız için ters dönüşüm burada gerekmez.
+    @Mapping(target = "company", ignore = true)
     Document toEntity(DocumentDTO documentDTO);
 }
