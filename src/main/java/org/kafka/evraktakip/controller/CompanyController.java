@@ -5,11 +5,15 @@ import org.kafka.evraktakip.dto.CompanyDTO;
 import org.kafka.evraktakip.service.CompanyService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/companies")
@@ -48,7 +52,11 @@ public class CompanyController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<CompanyDTO>> getAllCompanies(Pageable pageable) {
-        return ResponseEntity.ok(companyService.getAllCompanies(pageable));
+    public ResponseEntity<Page<CompanyDTO>> getAllCompanies(
+            @PageableDefault(size = 20, sort = "name") Pageable pageable,
+            @RequestParam(required = false) String search
+    ) {
+        Page<CompanyDTO> companies = companyService.getAllCompanies(pageable, search);
+        return ResponseEntity.ok(companies);
     }
 } 

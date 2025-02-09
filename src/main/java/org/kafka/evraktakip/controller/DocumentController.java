@@ -4,10 +4,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.kafka.evraktakip.dto.DocumentDTO;
+import org.kafka.evraktakip.dto.DocumentSearchCriteria;
 import org.kafka.evraktakip.model.Document;
 import org.kafka.evraktakip.service.DocumentService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +23,7 @@ import org.springframework.http.HttpHeaders;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/documents")
@@ -45,8 +50,17 @@ public class DocumentController {
     @GetMapping("/company/{companyId}")
     public ResponseEntity<Page<DocumentDTO>> getDocumentsByCompany(
             @PathVariable Long companyId,
-            Pageable pageable) {
-        Page<DocumentDTO> documents = documentService.getDocumentsByCompany(companyId, pageable);
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) String fileType,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @PageableDefault(size = 20, sort = "uploadDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        
+        DocumentSearchCriteria criteria = new DocumentSearchCriteria(
+            searchTerm, fileType, startDate, endDate
+        );
+        
+        Page<DocumentDTO> documents = documentService.getDocumentsByCompany(companyId, criteria, pageable);
         return ResponseEntity.ok(documents);
     }
 
